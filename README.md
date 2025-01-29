@@ -1,2 +1,2 @@
 # Expresso
-An AI powered terminal assistant written in golang
+Express-o your commands effortlessly.

@@ -7,13 +7,29 @@ import (
 	"strings"
 
 	"github.com/sashabaranov/go-openai"
+	"github.com/spf13/viper"
 )
 
 func main() {
+	// set viper config
+	viper.AddConfigPath("./config")
+	viper.SetConfigName("config")
+	viper.SetConfigType("yaml")
+	viper.ReadInConfig()
+
+	// read the config file
+	err := viper.ReadInConfig()
+	if err != nil {
+		fmt.Printf("Error reading config file: %v", err)
+	}
+
+	// fetching the API key as a string
+	apiKey := viper.GetString("openai_api_key")
+
 	args := os.Args[1:]
 	prompt := strings.Join(append([]string{}, args...), " ")
 
-	client := openai.NewClient("")
+	client := openai.NewClient(apiKey)
 
 	req := openai.ChatCompletionRequest{
 		Model: openai.GPT3Dot5Turbo,

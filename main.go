@@ -7,25 +7,16 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/AsharMoin/Expresso/config"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/sashabaranov/go-openai"
-	"github.com/spf13/viper"
 )
-
-type thinking struct {
-	loading bool
-	done    bool
-}
 
 type response struct {
 	command string
 	err     error
-}
-
-type command struct {
-	cmd *exec.Cmd
 }
 
 type model struct {
@@ -63,26 +54,18 @@ func callApi(prompt string) (string, error) {
 }
 
 func main() {
-	// set viper config
-	viper.AddConfigPath("./config")
-	viper.SetConfigName("config")
-	viper.SetConfigType("yaml")
-	viper.ReadInConfig()
-
-	// read the config file
-	err := viper.ReadInConfig()
-	if err != nil {
-		fmt.Printf("Error reading config file: %v", err)
-	}
-
 	// fetching the API key as a string
-	apiKey := viper.GetString("openai_api_key")
+	config, err := config.InitConfig()
+	if err != nil {
+		fmt.Println("No Config File Found")
+		os.Exit(1)
+	}
 
 	args := os.Args[1:]
 	prompt := strings.Join(append([]string{}, args...), " ")
 	prompt += " return only the command. Your response should not have any punctuation, just the command. never include an explanation, just the command."
 
-	client = openai.NewClient(apiKey)
+	client = openai.NewClient(config.OpenAIKey)
 
 	p := tea.NewProgram(initialModel())
 

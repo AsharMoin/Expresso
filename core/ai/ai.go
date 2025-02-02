@@ -12,4 +12,5 @@ type Expresso struct {
 
 func (e *Expresso) GenerateCommand(prompt string) (string, error) {
 
+	return "", nil
 }

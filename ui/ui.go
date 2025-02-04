@@ -1,29 +1,27 @@
 package ui
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"os/exec"
-	"strings"
 
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/sashabaranov/go-openai"
 )
 
 type UI struct {
 	loading  bool
 	quitting bool
-	command  string
+	output   string
+	input    string
 	spinner  spinner.Model
-	ai       Expresso
+	command  string
 }
 
 type Response struct {
-	command string
-	err     error
+	Command string
+	Err     error
 }
 
 var (
@@ -32,7 +30,7 @@ var (
 	spinnerStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("25"))
 )
 
-func initialModel() UI {
+func InitialModel() UI {
 	s := spinner.New()
 	s.Spinner = spinner.Dot
 	s.Style = spinnerStyle
@@ -42,18 +40,19 @@ func initialModel() UI {
 	}
 }
 
-func (ui *UI) Init() tea.Cmd {
+func (ui UI) Init() tea.Cmd {
 	return ui.spinner.Tick
 }
 
-func (ui *UI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (ui UI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case Response:
 		ui.loading = false
-		if msg.err != nil {
-			ui.command = fmt.Sprintf("Error: %v", msg.err)
+		if msg.Err != nil {
+			ui.output = fmt.Sprintf("Error: %v", msg.Err)
 		} else {
-			ui.command = fmt.Sprintf("\n\n  Command:  %s\n\n\n", keywordStyle.Render(msg.command)) +
+			ui.command = msg.Command
+			ui.output = fmt.Sprintf("\n\n  Command:  %s\n\n\n", keywordStyle.Render(msg.Command)) +
 				helpStyle.Render("  (y/N)\n")
 		}
 		return ui, nil
@@ -64,7 +63,17 @@ func (ui *UI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			ui.quitting = true
 			return ui, tea.Quit
 		case "y":
-			return ui, tea.ExecProcess(ui.ai.command, func(err error) tea.Msg {
+			if ui.command == "" {
+				ui.output = "No command to execute."
+				return ui, nil
+			}
+
+			// Create the shell command
+			cmd := exec.Command("powershell", "-c", ui.command)
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+
+			return ui, tea.ExecProcess(cmd, func(err error) tea.Msg {
 				os.Exit(0)
 				return fmt.Sprint("Error running program", err)
 			})
@@ -87,27 +96,5 @@ func (ui UI) View() string {
 		return fmt.Sprintf("\n\n %s Fetching command...", ui.spinner.View())
 	}
 
-	return ui.command
-}
-
-func (ui *UI) callApi(prompt string) (string, error) {
-	req := openai.ChatCompletionRequest{
-		Model: openai.GPT3Dot5Turbo,
-		Messages: []openai.ChatCompletionMessage{
-			{Role: openai.ChatMessageRoleSystem, Content: "You are a helpful chatbot"},
-			{Role: openai.ChatMessageRoleUser, Content: prompt},
-		},
-	}
-
-	resp, err := ui.ai.client.CreateChatCompletion(context.Background(), req)
-	if err != nil {
-		return "", err
-	}
-
-	command := strings.TrimSpace(resp.Choices[0].Message.Content)
-	ui.ai.client = exec.Command("powershell", "-c", command)
-	ui.ai.client.Stdout = os.Stdout
-	ui.ai.client.Stderr = os.Stderr
-
-	return command, nil
+	return ui.output
 }

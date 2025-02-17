@@ -73,10 +73,8 @@ func (ui *UI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmd.Stderr = os.Stderr
 
 			return ui, tea.ExecProcess(cmd, func(err error) tea.Msg {
-				if err != nil {
-					return Response{command: fmt.Sprintf("Error running program: %v", err)}
-				}
-				return Response{command: "Command executed successfully!"}
+				os.Exit(0)
+				return fmt.Sprint("Error running program", err)
 			})
 		}
 	case Response:

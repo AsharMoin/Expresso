@@ -34,7 +34,7 @@ var (
 	spinnerStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("25"))
 )
 
-func InitialModel(input UserInput) *UI {
+func InitialModel(input Input) *UI {
 	s := spinner.New()
 	s.Spinner = spinner.Dot
 	s.Style = spinnerStyle
@@ -108,7 +108,7 @@ func (ui *UI) View() string {
 }
 
 func (ui *UI) start(config *config.Config) tea.Cmd {
-	expresso := ai.NewExpresso(config.GetKey())
+	expresso := ai.NewExpresso(config)
 	ui.expresso = expresso
 
 	return tea.Batch(

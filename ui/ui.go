@@ -5,6 +5,8 @@ import (
 	"os"
 	"os/exec"
 
+	"github.com/AsharMoin/Expresso/ai"
+	"github.com/AsharMoin/Expresso/config"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -17,11 +19,13 @@ type UI struct {
 	input    string
 	spinner  spinner.Model
 	command  string
+	expresso *ai.Expresso
+	config   *config.Config
 }
 
 type Response struct {
-	Command string
-	Err     error
+	command string
+	err     error
 }
 
 var (
@@ -30,53 +34,59 @@ var (
 	spinnerStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("25"))
 )
 
-func InitialModel() UI {
+func InitialModel(input UserInput) *UI {
 	s := spinner.New()
 	s.Spinner = spinner.Dot
 	s.Style = spinnerStyle
-	return UI{
+	return &UI{
 		loading: true,
+		input:   input.GetPrompt(),
 		spinner: s,
 	}
 }
 
-func (ui UI) Init() tea.Cmd {
-	return ui.spinner.Tick
+func (ui *UI) Init() tea.Cmd {
+	// fetching the API key as a string
+	config, err := config.InitConfig()
+	if err != nil {
+		fmt.Println("No Config File Found")
+		os.Exit(1)
+	}
+
+	return ui.start(config)
 }
 
-func (ui UI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (ui *UI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case Response:
-		ui.loading = false
-		if msg.Err != nil {
-			ui.output = fmt.Sprintf("Error: %v", msg.Err)
-		} else {
-			ui.command = msg.Command
-			ui.output = fmt.Sprintf("\n\n  Command:  %s\n\n\n", keywordStyle.Render(msg.Command)) +
-				helpStyle.Render("  (y/N)\n")
-		}
-		return ui, nil
-
 	case tea.KeyMsg:
 		switch msg.String() {
+		case tea.KeyCtrlC.String():
+			ui.quitting = true
+			return ui, tea.Quit
 		case "n":
 			ui.quitting = true
 			return ui, tea.Quit
 		case "y":
-			if ui.command == "" {
-				ui.output = "No command to execute."
-				return ui, nil
-			}
-
 			// Create the shell command
-			cmd := exec.Command("powershell", "-c", ui.command)
+			cmd := exec.Command("powershell", "-c", ui.expresso.GetCommand())
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
 
 			return ui, tea.ExecProcess(cmd, func(err error) tea.Msg {
-				os.Exit(0)
-				return fmt.Sprint("Error running program", err)
+				if err != nil {
+					return Response{command: fmt.Sprintf("Error running program: %v", err)}
+				}
+				return Response{command: "Command executed successfully!"}
 			})
+		}
+	case Response:
+		ui.loading = false
+		if msg.command == "" {
+			ui.output = "Error, failed call to chatgpt"
+		} else {
+			ui.command = msg.command
+			ui.output = fmt.Sprintf("\n\n  Command:  %s\n\n\n", keywordStyle.Render(ui.command)) +
+				helpStyle.Render("  (y/N)\n")
 		}
 	default:
 		var cmd tea.Cmd
@@ -87,7 +97,7 @@ func (ui UI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return ui, nil
 }
 
-func (ui UI) View() string {
+func (ui *UI) View() string {
 	if ui.quitting {
 		return "Bye!"
 	}
@@ -97,4 +107,18 @@ func (ui UI) View() string {
 	}
 
 	return ui.output
+}
+
+func (ui *UI) start(config *config.Config) tea.Cmd {
+	expresso := ai.NewExpresso(config.GetKey())
+	ui.expresso = expresso
+
+	return tea.Batch(
+		ui.spinner.Tick,
+		func() tea.Msg {
+			ui.expresso.GenerateCommand(ui.input)
+			return Response{command: ui.expresso.GetCommand()}
+		},
+	)
+
 }

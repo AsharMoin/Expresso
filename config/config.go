@@ -7,8 +7,8 @@ import (
 )
 
 type Config struct {
-	OpenAIKey string
-	Shell     string
+	openaikey string
+	shell     string
 }
 
 func InitConfig() (*Config, error) {
@@ -23,15 +23,15 @@ func InitConfig() (*Config, error) {
 	}
 
 	return &Config{
-		OpenAIKey: viper.GetString("openai_api_key"),
-		Shell:     "powershell",
+		openaikey: viper.GetString("openai_api_key"),
+		shell:     "powershell",
 	}, nil
 }
 
 func (c *Config) GetKey() string {
-	return c.OpenAIKey
+	return c.openaikey
 }
 
 func (c *Config) GetShell() string {
-	return c.Shell
+	return c.shell
 }

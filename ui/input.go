@@ -41,3 +41,7 @@ func (u UserInput) CreateStructuredPrompt() string {
 
 	return u.Prompt + " Return only the command."
 }
+
+func (u UserInput) GetPrompt() string {
+	return u.Prompt
+}

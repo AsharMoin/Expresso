@@ -42,10 +42,12 @@ func (e *Expresso) GenerateCommand(input string) {
 	resp, err := e.client.CreateChatCompletion(context.Background(), req)
 	if err != nil {
 		e.response = Response{err: err}
+		return
 	}
 
 	if len(resp.Choices) == 0 {
 		e.response = Response{err: errors.New("no response from AI")}
+		return
 	}
 
 	command := strings.TrimSpace(resp.Choices[0].Message.Content)

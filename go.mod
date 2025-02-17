@@ -1,6 +1,6 @@
 module github.com/AsharMoin/Expresso
 
-go 1.23.4
+go 1.23
 
 require github.com/sashabaranov/go-openai v1.36.1
 

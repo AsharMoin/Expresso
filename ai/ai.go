@@ -3,6 +3,7 @@ package ai
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/AsharMoin/Expresso/config"
@@ -31,12 +32,11 @@ func NewExpresso(config *config.Config) *Expresso {
 func (e *Expresso) GenerateCommand(input string) {
 
 	req := openai.ChatCompletionRequest{
-		Model: openai.GPT3Dot5Turbo,
+		Model: openai.GPT4o,
 		Messages: []openai.ChatCompletionMessage{
 			{Role: openai.ChatMessageRoleSystem, Content: e.systemMessage()},
 			{Role: openai.ChatMessageRoleUser, Content: e.formatUserPrompt(input)},
 		},
-		Stop: []string{"\n"},
 	}
 
 	resp, err := e.client.CreateChatCompletion(context.Background(), req)
@@ -70,10 +70,16 @@ func (e *Expresso) formatUserPrompt(input string) string {
 	var prompt strings.Builder
 
 	prompt.WriteString("Convert the following task into an exact shell command. " +
-		"Your response must contain only the command and no explanations.\n\n" +
-		"Task: '''" + input + "'''")
+		"Your response must contain only the command and no explanations. " +
+		"Your response must not include punctuation. You must not include && in your response, use a newline." +
+		"Your response must be a command only." +
+		"For example: Task: list the directories in my current directory." +
+		"Response: ls \n\n" +
+		"Task: " + input + ".")
 
 	prompt.WriteString("Your command must be able to run in a " + e.config.GetUser().GetUserShell() + " terminal.")
+
+	fmt.Println(prompt.String())
 
 	return prompt.String()
 }

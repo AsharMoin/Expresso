@@ -28,6 +28,10 @@ type Response struct {
 	err     error
 }
 
+type Exiting struct {
+	success string
+}
+
 var (
 	keywordStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("25")).Background(lipgloss.Color("235"))
 	helpStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("241"))
@@ -52,6 +56,8 @@ func (ui *UI) Init() tea.Cmd {
 		fmt.Println("No Config File Found")
 		os.Exit(1)
 	}
+
+	ui.config = config
 
 	return ui.start(config)
 }
@@ -86,6 +92,12 @@ func (ui *UI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			ui.output = fmt.Sprintf("\n\n  Command:  %s\n\n\n", keywordStyle.Render(ui.command)) +
 				helpStyle.Render("  (y/N)\n")
 		}
+
+	case Exiting:
+		if msg.success != "" {
+			fmt.Println(msg.success)
+		}
+		return ui, tea.Quit
 	default:
 		var cmd tea.Cmd
 		ui.spinner, cmd = ui.spinner.Update(msg)

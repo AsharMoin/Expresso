@@ -101,7 +101,7 @@ func (ui *UI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			ui.confirming = true
 			ui.command = msg.command
 			ui.output = fmt.Sprintf("\n\n  Command:  %s \n\n  %s\n\n\n", keywordStyle.Render(msg.command), helpStyle.Render(msg.description)) +
-				helpStyle.Render("  (y/N)\n")
+				helpStyle.Render("  (y/N)\n\n")
 		}
 
 	case Exiting:

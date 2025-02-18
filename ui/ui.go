@@ -13,19 +13,21 @@ import (
 )
 
 type UI struct {
-	loading  bool
-	quitting bool
-	output   string
-	input    string
-	spinner  spinner.Model
-	command  string
-	expresso *ai.Expresso
-	config   *config.Config
+	loading    bool
+	quitting   bool
+	confirming bool
+	output     string
+	input      string
+	spinner    spinner.Model
+	command    string
+	expresso   *ai.Expresso
+	config     *config.Config
 }
 
 type Response struct {
-	command string
-	err     error
+	command     string
+	description string
+	err         error
 }
 
 type Exiting struct {
@@ -73,14 +75,18 @@ func (ui *UI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			ui.quitting = true
 			return ui, tea.Quit
 		case "y":
+			shell := ui.config.GetUser().GetUserShell()
+			var cmd *exec.Cmd
 			// Create the shell command
-			cmd := exec.Command("powershell", "-c", ui.expresso.GetCommand())
+			if shell == "cmd" {
+				cmd = exec.Command(shell, "/C", ui.expresso.GetCommand())
+			} else {
+				cmd = exec.Command(shell, "-c", ui.expresso.GetCommand())
+			}
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
-
 			return ui, tea.ExecProcess(cmd, func(err error) tea.Msg {
-				os.Exit(0)
-				return fmt.Sprint("Error running program", err)
+				return Exiting{success: "Success"}
 			})
 		}
 	case Response:
@@ -88,15 +94,15 @@ func (ui *UI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.command == "" {
 			ui.output = "Error, failed call to chatgpt"
 		} else {
+			ui.confirming = true
 			ui.command = msg.command
-			ui.output = fmt.Sprintf("\n\n  Command:  %s\n\n\n", keywordStyle.Render(ui.command)) +
+			ui.output = fmt.Sprintf("\n\n  Command:  %s \n\n  %s\n\n\n", keywordStyle.Render(msg.command), helpStyle.Render(msg.description)) +
 				helpStyle.Render("  (y/N)\n")
 		}
 
 	case Exiting:
-		if msg.success != "" {
-			fmt.Println(msg.success)
-		}
+		fmt.Println(msg.success)
+		ui.confirming = false
 		return ui, tea.Quit
 	default:
 		var cmd tea.Cmd
@@ -116,7 +122,11 @@ func (ui *UI) View() string {
 		return fmt.Sprintf("\n\n %s Fetching command...", ui.spinner.View())
 	}
 
-	return ui.output
+	if ui.confirming {
+		return ui.output
+	}
+
+	return ""
 }
 
 func (ui *UI) start(config *config.Config) tea.Cmd {
@@ -127,7 +137,7 @@ func (ui *UI) start(config *config.Config) tea.Cmd {
 		ui.spinner.Tick,
 		func() tea.Msg {
 			ui.expresso.GenerateCommand(ui.input)
-			return Response{command: ui.expresso.GetCommand()}
+			return Response{command: ui.expresso.GetCommand(), description: ui.expresso.GetDescription()}
 		},
 	)
 

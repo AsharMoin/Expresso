@@ -2,6 +2,7 @@ package ai
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -18,8 +19,9 @@ type Expresso struct {
 }
 
 type Response struct {
-	command string
-	err     error
+	Cmd         string `json:"cmd"`
+	Description string `json:"description"`
+	err         error
 }
 
 func NewExpresso(config *config.Config) *Expresso {
@@ -50,36 +52,48 @@ func (e *Expresso) GenerateCommand(input string) {
 		return
 	}
 
-	command := strings.TrimSpace(resp.Choices[0].Message.Content)
-	e.response = Response{command: command, err: nil}
+	rawJSON := strings.TrimSpace(resp.Choices[0].Message.Content)
+
+	var res Response
+	if err := json.Unmarshal([]byte(rawJSON), &res); err != nil {
+		fmt.Println("JSON Unmarshal Error:", err)
+		return
+	}
+
+	e.response = Response{Cmd: res.Cmd, Description: res.Description, err: nil}
+
 }
 
 func (e *Expresso) GetCommand() string {
-	return e.response.command
+	return e.response.Cmd
 }
 
-// systemMessage defines the AI’s behavior
+func (e *Expresso) GetDescription() string {
+	return e.response.Description
+}
+
 func (e *Expresso) systemMessage() string {
 	return "You are an expert in shell commands. " +
-		"Your task is to convert natural language requests into precise, fully executable shell commands. " +
-		"Return only the command and nothing else."
+		"Convert natural language requests into precise, fully executable shell commands. " +
+		"Your response must be a valid JSON object with two keys: " +
+		"\"cmd\": the exact shell command, and \"description\": a short description of what the command does. " +
+		"Return ONLY the JSON object, with no extra text or formatting."
 }
 
-// formatUserPrompt structures the prompt for clarity
 func (e *Expresso) formatUserPrompt(input string) string {
 	var prompt strings.Builder
 
 	prompt.WriteString("Convert the following task into an exact shell command. " +
-		"Your response must contain only the command and no explanations. " +
-		"Your response must not include punctuation. You must not include && in your response, use a newline." +
-		"Your response must be a command only." +
-		"For example: Task: list the directories in my current directory." +
-		"Response: ls \n\n" +
+		"Your response must be a valid JSON object containing two keys: " +
+		"1) \"cmd\": the exact shell command without any additional text. " +
+		"2) \"description\": a brief explanation of what the command does. " +
+		"Your response must be JSON formatted with no additional punctuation or text outside of the JSON." +
+		"Example:\n" +
+		"Task: list the directories in my current directory.\n" +
+		"Response: {\"cmd\": \"ls\", \"description\": \"Lists the directories in the current directory.\"}\n\n" +
 		"Task: " + input + ".")
 
 	prompt.WriteString("Your command must be able to run in a " + e.config.GetUser().GetUserShell() + " terminal.")
-
-	fmt.Println(prompt.String())
 
 	return prompt.String()
 }

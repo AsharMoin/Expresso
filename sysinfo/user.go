@@ -2,6 +2,7 @@ package sysinfo
 
 import (
 	"os"
+	"os/exec"
 	"runtime"
 	"strings"
 )
@@ -21,22 +22,33 @@ func (u *User) GetUserShell() string {
 }
 
 func GetShell() string {
-	// define a lookup table for popular shells and terminal emulators
+	// lookup table for shells
 	terminals := map[string]string{
-		"cmd.exe":          "cmd",
-		"powershell.exe":   "powershell",
-		"Windows Terminal": "windows_terminal",
-		"Git Bash":         "git_bash",
-		"bash":             "bash",
-		"zsh":              "zsh",
-		"fish":             "fish",
-		"sh":               "sh",
-		"iTerm":            "iterm",
-		"Terminal":         "mac_terminal",
+		"cmd.exe":        "cmd",
+		"powershell.exe": "powershell",
+		"pwsh.exe":       "powershell",
+		"bash":           "bash",
+		"zsh":            "zsh",
+		"fish":           "fish",
+		"sh":             "sh",
 	}
 
-	// windows-based terminals
+	// windows-based shell detection
 	if runtime.GOOS == "windows" {
+		// first check if we are inside PowerShell
+		if os.Getenv("PSModulePath") != "" {
+			return "powershell"
+		}
+
+		out, err := exec.Command("wmic", "process", "get", "name").Output()
+		if err == nil {
+			processes := strings.ToLower(string(out))
+			if strings.Contains(processes, "powershell.exe") {
+				return "powershell"
+			}
+		}
+
+		// check ComSpec as a fallback
 		comspec := os.Getenv("ComSpec")
 		for key, value := range terminals {
 			if strings.Contains(strings.ToLower(comspec), strings.ToLower(key)) {
@@ -44,17 +56,9 @@ func GetShell() string {
 			}
 		}
 
-		termProgram := os.Getenv("TERM_PROGRAM")
-		for key, value := range terminals {
-			if strings.Contains(strings.ToLower(termProgram), strings.ToLower(key)) {
-				return value
-			}
-		}
-
-		return "windows_terminal"
+		return "cmd" // default to cmd if nothing else matches
 	}
 
-	// Unix-based terminals (Linux/macOS)
 	shell := os.Getenv("SHELL")
 	for key, value := range terminals {
 		if strings.Contains(strings.ToLower(shell), strings.ToLower(key)) {

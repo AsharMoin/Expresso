@@ -86,6 +86,10 @@ func (ui *UI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
 			return ui, tea.ExecProcess(cmd, func(err error) tea.Msg {
+				if err != nil {
+					fmt.Println("Error executing command:", err)
+					return Exiting{success: "Command execution failed"}
+				}
 				return Exiting{success: "Success"}
 			})
 		}
@@ -101,8 +105,9 @@ func (ui *UI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case Exiting:
-		fmt.Println(msg.success)
+		ui.output = msg.success
 		ui.confirming = false
+		ui.quitting = true
 		return ui, tea.Quit
 	default:
 		var cmd tea.Cmd
@@ -115,7 +120,7 @@ func (ui *UI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (ui *UI) View() string {
 	if ui.quitting {
-		return "Bye!"
+		return fmt.Sprintf("\n%s\n\n", ui.output)
 	}
 
 	if ui.loading {

@@ -1,8 +1,6 @@
 package config
 
 import (
-	"fmt"
-
 	"github.com/AsharMoin/Expresso/sysinfo"
 	"github.com/spf13/viper"
 )
@@ -22,7 +20,7 @@ func InitConfig() (*Config, error) {
 
 	err := viper.ReadInConfig()
 	if err != nil {
-		fmt.Printf("Error reading config file: %v", err)
+		return nil, err
 	}
 
 	config.openaikey = viper.GetString("openai_api_key")

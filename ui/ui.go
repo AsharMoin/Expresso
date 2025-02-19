@@ -1,7 +1,9 @@
 package ui
 
 import (
+	"bytes"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 
@@ -16,7 +18,8 @@ type UI struct {
 	loading    bool
 	quitting   bool
 	confirming bool
-	output     string
+	failed     bool
+	output     *Output
 	input      string
 	spinner    spinner.Model
 	command    string
@@ -45,9 +48,14 @@ func InitialModel(input Input) *UI {
 	s.Spinner = spinner.Dot
 	s.Style = spinnerStyle
 	return &UI{
-		loading: true,
-		input:   input.GetPrompt(),
-		spinner: s,
+		loading:    true,
+		quitting:   false,
+		confirming: false,
+		failed:     false,
+		output:     NewOutput(),
+		input:      input.GetPrompt(),
+		spinner:    s,
+		command:    "",
 	}
 }
 
@@ -83,29 +91,33 @@ func (ui *UI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			} else {
 				cmd = exec.Command(shell, "-c", ui.expresso.GetCommand())
 			}
-			cmd.Stdout = os.Stdout
-			cmd.Stderr = os.Stderr
+			var Stdout, Stderr bytes.Buffer
+
+			cmd.Stdout = &Stdout
+			cmd.Stderr = &Stderr
 			return ui, tea.ExecProcess(cmd, func(err error) tea.Msg {
 				if err != nil {
-					fmt.Println("Error executing command:", err)
-					return Exiting{success: "Command execution failed"}
+					return Exiting{success: "Command execution failed, " + err.Error()}
 				}
-				return Exiting{success: "Success"}
+				log.Fatal(Stdout.String())
+				return Exiting{success: Stdout.String()}
 			})
 		}
 	case Response:
 		ui.loading = false
 		if msg.command == "" {
-			ui.output = "Error, failed call to chatgpt"
+			ui.failed = true
+			ui.output.AppendOutput("Error, failed call to chatgpt")
+			return ui, tea.Quit
 		} else {
 			ui.confirming = true
 			ui.command = msg.command
-			ui.output = fmt.Sprintf("\n\n  Command:  %s \n\n  %s\n\n\n", keywordStyle.Render(msg.command), helpStyle.Render(msg.description)) +
-				helpStyle.Render("  (y/N)\n\n")
+			ui.output.AppendOutput(fmt.Sprintf("\n\n  Command:  %s \n\n  %s\n\n\n", keywordStyle.Render(msg.command), helpStyle.Render(msg.description)) +
+				helpStyle.Render("  (y/N)\n\n"))
 		}
 
 	case Exiting:
-		ui.output = msg.success
+		ui.output.AppendOutput(msg.success)
 		ui.confirming = false
 		ui.quitting = true
 		return ui, tea.Quit
@@ -120,7 +132,7 @@ func (ui *UI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (ui *UI) View() string {
 	if ui.quitting {
-		return fmt.Sprintf("\n%s\n\n", ui.output)
+		return fmt.Sprintf("%s\n\n", ui.output.GetStdout())
 	}
 
 	if ui.loading {
@@ -128,7 +140,7 @@ func (ui *UI) View() string {
 	}
 
 	if ui.confirming {
-		return ui.output
+		return ui.output.GetStdout()
 	}
 
 	return ""

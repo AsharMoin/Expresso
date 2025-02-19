@@ -1,9 +1,7 @@
 package ui
 
 import (
-	"bytes"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 
@@ -19,6 +17,7 @@ type UI struct {
 	quitting   bool
 	confirming bool
 	failed     bool
+	success    string
 	output     *Output
 	input      string
 	spinner    spinner.Model
@@ -85,22 +84,27 @@ func (ui *UI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "y":
 			shell := ui.config.GetUser().GetUserShell()
 			var cmd *exec.Cmd
+
+			// Create the command with newlines before and after
+			commandWithFormatting := fmt.Sprintf("echo \"\n\";%s; echo \"\n\";", ui.expresso.GetCommand())
+
 			// Create the shell command
 			if shell == "cmd" {
-				cmd = exec.Command(shell, "/C", ui.expresso.GetCommand())
+				cmd = exec.Command(shell, "/C", commandWithFormatting)
 			} else {
-				cmd = exec.Command(shell, "-c", ui.expresso.GetCommand())
+				cmd = exec.Command(shell, "-c", commandWithFormatting)
 			}
-			var Stdout, Stderr bytes.Buffer
 
-			cmd.Stdout = &Stdout
-			cmd.Stderr = &Stderr
+			// Let the command inherit the terminal's stdio
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+			cmd.Stdin = os.Stdin
+
 			return ui, tea.ExecProcess(cmd, func(err error) tea.Msg {
 				if err != nil {
 					return Exiting{success: "Command execution failed, " + err.Error()}
 				}
-				log.Fatal(Stdout.String())
-				return Exiting{success: Stdout.String()}
+				return Exiting{success: ""} // Output has already been written to stdout
 			})
 		}
 	case Response:
@@ -117,7 +121,7 @@ func (ui *UI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case Exiting:
-		ui.output.AppendOutput(msg.success)
+		ui.success = "Success"
 		ui.confirming = false
 		ui.quitting = true
 		return ui, tea.Quit
@@ -132,7 +136,7 @@ func (ui *UI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (ui *UI) View() string {
 	if ui.quitting {
-		return fmt.Sprintf("%s\n\n", ui.output.GetStdout())
+		return fmt.Sprintf("%s\n\n", ui.success)
 	}
 
 	if ui.loading {

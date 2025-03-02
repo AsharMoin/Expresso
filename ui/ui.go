@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/AsharMoin/Expresso/ai"
 	"github.com/AsharMoin/Expresso/config"
@@ -34,6 +35,7 @@ type Response struct {
 
 type Exiting struct {
 	success string
+	output  string
 }
 
 var (
@@ -82,30 +84,43 @@ func (ui *UI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			ui.quitting = true
 			return ui, tea.Quit
 		case "y":
+			// First, save the current output
+			currentOutput := ui.output.GetStdout()
+			// Exit bubble tea mode temporarily to let the command take over the terminal
+			ui.confirming = false
+			cmds := []tea.Cmd{tea.ClearScreen, tea.ExitAltScreen}
+
+			// Prepare and execute the command
 			shell := ui.config.GetUser().GetUserShell()
 			var cmd *exec.Cmd
 
-			// Create the command with newlines before and after
-			commandWithFormatting := fmt.Sprintf("echo \"\n\";%s; echo \"\n\";", ui.expresso.GetCommand())
-
 			// Create the shell command
 			if shell == "cmd" {
-				cmd = exec.Command(shell, "/C", commandWithFormatting)
+				cmd = exec.Command(shell, "/C", ui.expresso.GetCommand())
 			} else {
-				cmd = exec.Command(shell, "-c", commandWithFormatting)
+				cmd = exec.Command(shell, "-c", ui.expresso.GetCommand())
 			}
 
-			// Let the command inherit the terminal's stdio
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
 			cmd.Stdin = os.Stdin
 
-			return ui, tea.ExecProcess(cmd, func(err error) tea.Msg {
+			// Execute the command outside bubble tea control
+			cmds = append(cmds, func() tea.Msg {
+
+				err := cmd.Run()
 				if err != nil {
-					return Exiting{success: "Command execution failed, " + err.Error()}
+					fmt.Println(err.Error())
 				}
-				return Exiting{success: ""} // Output has already been written to stdout
+
+				// Return message that will signal bubble tea to quit
+				return Exiting{
+					success: "Success",
+					output:  currentOutput,
+				}
 			})
+
+			return ui, tea.Sequence(cmds...)
 		}
 	case Response:
 		ui.loading = false
@@ -116,15 +131,19 @@ func (ui *UI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else {
 			ui.confirming = true
 			ui.command = msg.command
-			ui.output.AppendOutput(fmt.Sprintf("\n\n  Command:  %s \n\n  %s\n\n\n", keywordStyle.Render(msg.command), helpStyle.Render(msg.description)) +
+			ui.output.AppendOutput(fmt.Sprintf("\n\n  Command:  %s \n\n  %s\n\n\n",
+				keywordStyle.Render(msg.command),
+				helpStyle.Render(msg.description)) +
 				helpStyle.Render("  (y/N)\n\n"))
 		}
 
 	case Exiting:
-		ui.success = "Success"
+		ui.success = strings.TrimSpace(msg.success)
 		ui.confirming = false
 		ui.quitting = true
+
 		return ui, tea.Quit
+
 	default:
 		var cmd tea.Cmd
 		ui.spinner, cmd = ui.spinner.Update(msg)
@@ -161,5 +180,4 @@ func (ui *UI) start(config *config.Config) tea.Cmd {
 			return Response{command: ui.expresso.GetCommand(), description: ui.expresso.GetDescription()}
 		},
 	)
-
 }

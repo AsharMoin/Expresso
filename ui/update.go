@@ -28,11 +28,11 @@ func (ui *UI) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
 	case tea.KeyCtrlC.String():
 		ui.state = StateQuitting
-		ui.command = "Cancelled"
+		ui.err = "Cancelled"
 		return ui, tea.Quit
 	case "n":
 		ui.state = StateQuitting
-		ui.command = "Cancelled"
+		ui.err = "Cancelled"
 		return ui, tea.Quit
 	case "y":
 		return ui.executeCommand()
@@ -58,7 +58,7 @@ func (ui *UI) handleResponse(msg Response) (tea.Model, tea.Cmd) {
 
 // handleExit processes application exit messages
 func (ui *UI) handleExit(msg Exiting) (tea.Model, tea.Cmd) {
-	ui.command = strings.TrimSpace(msg.success)
+	ui.success = strings.TrimSpace(msg.success)
 	ui.state = StateQuitting
 	return ui, tea.Quit
 }
@@ -80,7 +80,7 @@ func (ui *UI) executeCommand() (tea.Model, tea.Cmd) {
 
 	// We need to exit the Bubble Tea program's alternate screen mode
 	// to allow direct stdout access, but without clearing
-	cmds := []tea.Cmd{tea.ClearScreen, tea.ExitAltScreen}
+	cmds := []tea.Cmd{tea.ClearScreen}
 
 	// Prepare command for execution
 	shell := ui.config.GetUser().GetUserShell()
@@ -91,18 +91,12 @@ func (ui *UI) executeCommand() (tea.Model, tea.Cmd) {
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
 
-	// Add command execution to sequence
-	cmds = append(cmds, func() tea.Msg {
-		err := cmd.Run()
-		if err != nil {
-			fmt.Println(err.Error())
-		}
-
+	cmds = append(cmds, tea.ExecProcess(cmd, func(err error) tea.Msg {
 		return Exiting{
 			success: "Success",
 			output:  currentOutput,
 		}
-	})
+	}))
 
 	return ui, tea.Sequence(cmds...)
 }
@@ -124,3 +118,6 @@ func formatCommandOutput(command, description string) string {
 		helpStyle.Render(description)) +
 		helpStyle.Render("  (y/N)\n\n")
 }
+
+// ok so right now if I dont clear the screen, remove that, then what happens is it will print nothing, because of the view StateExecuting being "".
+// if we can fix the view so it returns the GetStdout, then it shows the command which is correct, but then it cuts the commands stdout short. thats what we need to fix.

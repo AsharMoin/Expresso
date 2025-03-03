@@ -13,6 +13,8 @@ type UI struct {
 	output   *Output
 	input    string
 	command  string
+	err      string
+	success  string
 	spinner  spinner.Model
 	expresso *ai.Expresso
 	config   *config.Config
@@ -34,6 +36,8 @@ var (
 	keywordStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("25")).Background(lipgloss.Color("235"))
 	helpStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("241"))
 	spinnerStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("25"))
+	successStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("112"))
+	errorStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("160"))
 )
 
 // NewUI creates a new UI model

@@ -28,7 +28,10 @@ func (ui *UI) View() string {
 	case StateExecuting:
 		return ""
 	case StateQuitting:
-		return fmt.Sprintf("%s\n\n", ui.command)
+		if ui.err != "" {
+			return fmt.Sprintf("\n%s\n\n", errorStyle.Render(ui.err))
+		}
+		return fmt.Sprintf("%s\n\n", successStyle.Render(ui.success))
 	case StateLoading:
 		return fmt.Sprintf("\n\n %s Fetching command...", ui.spinner.View())
 	case StateConfirming:

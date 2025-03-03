@@ -4,7 +4,6 @@ package ui
 type Response struct {
 	command     string
 	description string
-	err         error
 }
 
 // Exiting is the message sent when the application is quitting

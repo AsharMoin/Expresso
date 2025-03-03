@@ -40,6 +40,19 @@ var (
 	errorStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("160"))
 )
 
+var loadingMessages = []string{
+	"Processing magic...",
+	"Fetching data...",
+	"Powering up...",
+	"Waiting for something cool...",
+	"Waking up the AI...",
+	"Cooking up some data...",
+	"Convincing the code to work...",
+	"Making things up...",
+	"Counting to infinity...",
+	"Rearranging ones and zeroes...",
+}
+
 // NewUI creates a new UI model
 func NewUI(input Input) *UI {
 	s := spinner.New()

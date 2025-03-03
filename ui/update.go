@@ -72,33 +72,26 @@ func (ui *UI) handleDefaultMsg(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 // executeCommand prepares and runs the shell command
 func (ui *UI) executeCommand() (tea.Model, tea.Cmd) {
-	// Save current output before execution
-	currentOutput := ui.output.GetStdout()
+	commandToExecute := ui.expresso.GetCommand()
 
-	// Set state to executing
 	ui.state = StateExecuting
 
-	// We need to exit the Bubble Tea program's alternate screen mode
-	// to allow direct stdout access, but without clearing
-	cmds := []tea.Cmd{tea.ClearScreen}
-
-	// Prepare command for execution
 	shell := ui.config.GetUser().GetUserShell()
-	cmd := createShellCommand(shell, ui.expresso.GetCommand())
+	cmd := createShellCommand(shell, commandToExecute)
 
-	// Set up standard IO
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
 
-	cmds = append(cmds, tea.ExecProcess(cmd, func(err error) tea.Msg {
-		return Exiting{
-			success: "Success",
-			output:  currentOutput,
-		}
-	}))
-
-	return ui, tea.Sequence(cmds...)
+	return ui, tea.Sequence(
+		func() tea.Msg {
+			cmd.Run()
+			return Exiting{
+				success: "Success",
+				output:  commandToExecute,
+			}
+		},
+	)
 }
 
 // Helper functions
@@ -118,6 +111,3 @@ func formatCommandOutput(command, description string) string {
 		helpStyle.Render(description)) +
 		helpStyle.Render("  (y/N)\n\n")
 }
-
-// ok so right now if I dont clear the screen, remove that, then what happens is it will print nothing, because of the view StateExecuting being "".
-// if we can fix the view so it returns the GetStdout, then it shows the command which is correct, but then it cuts the commands stdout short. thats what we need to fix.

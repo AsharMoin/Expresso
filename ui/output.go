@@ -9,10 +9,21 @@ func NewOutput() *Output {
 	return &Output{stdout: "", result: ""}
 }
 
-func (o *Output) AppendOutput(output string) {
-	o.stdout = o.stdout + output
+// SetStdout sets the stdout content
+func (o *Output) SetStdout(content string) {
+	o.stdout = content
 }
 
+// AppendOutput appends content to stdout
+func (o *Output) AppendOutput(content string) {
+	if o.stdout == "" {
+		o.stdout = content
+	} else {
+		o.stdout += content
+	}
+}
+
+// GetStdout returns the current stdout content
 func (o *Output) GetStdout() string {
 	return o.stdout
 }

@@ -34,9 +34,9 @@ func (ui *UI) View() string {
 		return ui.output.GetStdout() + "\nExecute this command? (y/N) "
 	case StateQuitting:
 		if ui.err != "" {
-			return ui.output.GetStdout() + "\n" + errorStyle.Render(ui.err) + "\n\n\n"
+			return ui.output.GetStdout() + "\n\n" + errorStyle.Render(ui.err) + "\n\n\n"
 		}
-		return ui.output.GetStdout() + "\n" + successStyle.Render(ui.success) + "\n\n\n"
+		return ui.output.GetStdout() + "\n\n" + successStyle.Render(ui.success) + "\n\n\n"
 	default:
 		return fmt.Sprintf("\n%s%s", ui.spinner.View(), message)
 	}

@@ -11,7 +11,7 @@ import (
 func main() {
 	input := ui.ParseInput()
 
-	if _, err := tea.NewProgram(ui.InitialModel(input)).Run(); err != nil {
+	if _, err := tea.NewProgram(ui.NewUI(input)).Run(); err != nil {
 		fmt.Println("Oopsie", err)
 		os.Exit(1)
 	}

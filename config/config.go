@@ -36,3 +36,19 @@ func (c *Config) GetKey() string {
 func (c *Config) GetUser() *sysinfo.User {
 	return c.user
 }
+
+func (c *Config) UpdateConfig(key string) error {
+	viper.Set("openai_api_key", key)
+
+	// Try to write to existing config
+	err := viper.WriteConfig()
+	if err != nil {
+		// If config file doesn't exist, create it
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			return viper.SafeWriteConfig()
+		}
+		return err
+	}
+
+	return nil
+}

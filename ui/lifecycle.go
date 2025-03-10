@@ -3,10 +3,10 @@ package ui
 import (
 	"fmt"
 	"math/rand"
-	"os"
 
 	"github.com/AsharMoin/Expresso/ai"
 	"github.com/AsharMoin/Expresso/config"
+	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -14,11 +14,12 @@ import (
 func (ui *UI) Init() tea.Cmd {
 	// Load configuration
 	config, err := config.InitConfig()
-	if err != nil {
-		fmt.Println("No Config File Found")
-		os.Exit(1)
-	}
 	ui.config = config
+	if err != nil {
+		return tea.Sequence(
+			ui.startConfigure(),
+		)
+	}
 
 	return ui.start(config)
 }
@@ -29,17 +30,21 @@ var message = loadingMessages[rand.Intn(len(loadingMessages))]
 func (ui *UI) View() string {
 	switch ui.state {
 	case StateExecuting:
-		return ui.output.GetStdout() + "\nExecuting command...\n"
+		return ui.output.GetStdout() + "Executing command...\n"
 	case StateConfirming:
-		return ui.output.GetStdout() + "\nExecute this command? (y/N) "
+		return ui.output.GetStdout() + "Execute this command? (y/N) "
 	case StateQuitting:
 		if ui.err != "" {
-			return ui.output.GetStdout() + "\n\n" + errorStyle.Render(ui.err) + "\n\n\n"
+			return ui.output.GetStdout() + "\n" + errorStyle.Render(ui.err) + "\n\n\n"
 		}
-		return ui.output.GetStdout() + "\n\n" + successStyle.Render(ui.success) + "\n\n\n"
-	default:
+		return ui.output.GetStdout() + "\n" + successStyle.Render(ui.success) + "\n\n\n"
+	case StateConfiguring:
+		return fmt.Sprintf("%s\n%s", ui.output.GetStdout(), ui.output.View())
+	case StateLoading:
 		return fmt.Sprintf("\n%s%s", ui.spinner.View(), message)
 	}
+
+	return ""
 }
 
 // start initializes the Expresso AI and begins command generation
@@ -50,6 +55,7 @@ func (ui *UI) start(config *config.Config) tea.Cmd {
 	return tea.Batch(
 		ui.spinner.Tick,
 		func() tea.Msg {
+			ui.state = StateLoading
 			ui.expresso.GenerateCommand(ui.input)
 			return Response{
 				command:     ui.expresso.GetCommand(),
@@ -57,4 +63,12 @@ func (ui *UI) start(config *config.Config) tea.Cmd {
 			}
 		},
 	)
+}
+
+func (ui *UI) startConfigure() tea.Cmd {
+	ui.output.AppendOutput(configStyle.Render(DefaultConfigureMessage))
+	ui.state = StateConfiguring
+	ui.output.Focus()
+
+	return textinput.Blink
 }

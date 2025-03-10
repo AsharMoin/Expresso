@@ -1,17 +1,22 @@
 package ui
 
+import (
+	"github.com/charmbracelet/bubbles/textinput"
+	tea "github.com/charmbracelet/bubbletea"
+)
+
 type Output struct {
-	stdout string
-	result string
+	stdout    string
+	textInput textinput.Model
+	err       error
 }
 
 func NewOutput() *Output {
-	return &Output{stdout: "", result: ""}
-}
+	ti := textinput.New()
+	ti.Focus()
+	ti.Placeholder = "Openai API Key"
 
-// SetStdout sets the stdout content
-func (o *Output) SetStdout(content string) {
-	o.stdout = content
+	return &Output{stdout: "", textInput: ti, err: nil}
 }
 
 // AppendOutput appends content to stdout
@@ -25,5 +30,26 @@ func (o *Output) AppendOutput(content string) {
 
 // GetStdout returns the current stdout content
 func (o *Output) GetStdout() string {
-	return o.stdout
+	return "\n" + o.stdout + "\n"
+}
+
+func (o *Output) Focus() *Output {
+	o.textInput.Focus()
+
+	return o
+}
+
+func (o *Output) Update(msg tea.Msg) (*Output, tea.Cmd) {
+	var updateCmd tea.Cmd
+	o.textInput, updateCmd = o.textInput.Update(msg)
+
+	return o, updateCmd
+}
+
+func (o *Output) View() string {
+	return o.textInput.View()
+}
+
+func (o *Output) GetValue() string {
+	return o.textInput.Value()
 }

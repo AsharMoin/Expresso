@@ -25,19 +25,52 @@ func (ui *UI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 // handleKeyPress processes keyboard input
 func (ui *UI) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	switch msg.String() {
-	case tea.KeyCtrlC.String():
-		ui.state = StateQuitting
-		ui.err = "Cancelled"
-		return ui, tea.Quit
-	case "n":
-		ui.state = StateQuitting
-		ui.err = "Cancelled"
-		return ui, tea.Quit
-	case "y":
-		return ui.executeCommand()
+	switch ui.state {
+	case StateConfiguring:
+		switch msg.String() {
+		case tea.KeyCtrlC.String():
+			ui.state = StateQuitting
+			ui.err = "[Cancelled state correct]"
+			return ui, tea.Quit
+		case tea.KeyEnter.String():
+			apiKey := ui.output.GetValue()
+			if apiKey == "" {
+				return ui, nil
+			}
+
+			// Continue to normal flow
+			return ui, func() tea.Msg {
+				if err := ui.config.UpdateConfig(apiKey); err != nil {
+					ui.state = StateQuitting
+					ui.err = "[Your key failed to be added.]"
+				}
+				return Exiting{
+					success: "[Your key was successfully added!]",
+					output:  "",
+				}
+			}
+		default:
+			// Update text input with key press
+			var cmd tea.Cmd
+			ui.output, cmd = ui.output.Update(msg)
+			return ui, cmd
+		}
 	default:
-		return ui, nil
+		// Existing switch logic for non-configuring states
+		switch msg.String() {
+		case tea.KeyCtrlC.String():
+			ui.state = StateQuitting
+			ui.err = "[Cancelled]"
+			return ui, tea.Quit
+		case "n":
+			ui.state = StateQuitting
+			ui.err = "[Cancelled]"
+			return ui, tea.Quit
+		case "y":
+			return ui.executeCommand()
+		default:
+			return ui, nil
+		}
 	}
 }
 
@@ -66,6 +99,11 @@ func (ui *UI) handleExit(msg Exiting) (tea.Model, tea.Cmd) {
 // handleDefaultMsg handles all other message types
 func (ui *UI) handleDefaultMsg(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
+	if ui.state == StateConfiguring {
+		ui.output, cmd = ui.output.Update(msg)
+		return ui, cmd
+	}
+
 	ui.spinner, cmd = ui.spinner.Update(msg)
 	return ui, cmd
 }
@@ -87,7 +125,7 @@ func (ui *UI) executeCommand() (tea.Model, tea.Cmd) {
 		func() tea.Msg {
 			cmd.Run()
 			return Exiting{
-				success: "Success",
+				success: "[Success]",
 				output:  commandToExecute,
 			}
 		},
@@ -108,6 +146,5 @@ func createShellCommand(shell, commandStr string) *exec.Cmd {
 func formatCommandOutput(command, description string) string {
 	return fmt.Sprintf("\n\n  Command:  %s \n\n  %s\n\n\n",
 		keywordStyle.Render(command),
-		helpStyle.Render(description)) +
-		helpStyle.Render("  (y/N)\n\n")
+		helpStyle.Render(description))
 }

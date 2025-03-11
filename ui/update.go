@@ -42,7 +42,7 @@ func (ui *UI) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			return ui, func() tea.Msg {
 				if err := ui.config.UpdateConfig(apiKey); err != nil {
 					ui.state = StateQuitting
-					ui.err = "[Your key failed to be added.]"
+					ui.err = "[Your key failed to be added]"
 				}
 				return Exiting{
 					success: "[Your key was successfully added!]",
@@ -78,7 +78,7 @@ func (ui *UI) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 func (ui *UI) handleResponse(msg Response) (tea.Model, tea.Cmd) {
 	if msg.command == "" {
 		ui.state = StateFailed
-		ui.output.AppendOutput("Error, failed call to chatgpt")
+		ui.output.AppendOutput("[Error, failed call to chatgpt]")
 		return ui, tea.Quit
 	}
 

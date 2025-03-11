@@ -3,7 +3,7 @@
 # Repository information
 REPOOWNER="AsharMoin"
 REPONAME="Expresso"
-RELEASETAG=$(curl -s "https://api.github.com/repos/$REPOOWNER/$REPONAME/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+VERSION="v1.0.0"  # Hardcoded version for first release
 
 # Determine OS type
 KERNEL=$(uname -s 2>/dev/null || /usr/bin/uname -s)
@@ -46,22 +46,22 @@ case ${MACHINE} in
 esac
 
 # Binary and installation directory settings
-BINNAME="${BINNAME:-expresso}"
+BINNAME="expresso"
 BINDIR="${BINDIR:-/usr/local/bin}"
 CONFIG_DIR="${HOME}/.config/expresso"
 
-# Download URL for the release
-URL="https://github.com/$REPOOWNER/$REPONAME/releases/download/${RELEASETAG}/expresso_${RELEASETAG}_${KERNEL}_${MACHINE}.tar.gz"
+# Download URL for the release - make sure this matches your file naming convention
+URL="https://github.com/$REPOOWNER/$REPONAME/releases/download/${VERSION}/expresso_${VERSION}_${KERNEL}_${MACHINE}.tar.gz"
 
-echo "Installing Expresso version $RELEASETAG..."
+echo "Installing Expresso version $VERSION..."
 echo "Downloading from $URL"
 echo
 
 # Download the release archive
-curl -q --fail --location --progress-bar --output "expresso_${RELEASETAG}_${KERNEL}_${MACHINE}.tar.gz" "$URL"
+curl -q --fail --location --progress-bar --output "expresso_${KERNEL}_${MACHINE}.tar.gz" "$URL"
 
 # Extract the archive
-tar xzf "expresso_${RELEASETAG}_${KERNEL}_${MACHINE}.tar.gz"
+tar xzf "expresso_${KERNEL}_${MACHINE}.tar.gz"
 
 # Make binary executable
 chmod +x $BINNAME
@@ -73,9 +73,9 @@ mkdir -p $CONFIG_DIR
 sudo mv $BINNAME $BINDIR/$BINNAME
 
 # Clean up
-rm "expresso_${RELEASETAG}_${KERNEL}_${MACHINE}.tar.gz"
+rm "expresso_${KERNEL}_${MACHINE}.tar.gz"
 
 echo
-echo "Installation of Expresso version $RELEASETAG complete!"
+echo "Installation of Expresso version $VERSION complete!"
 echo "Run 'expresso' to start using it."
 echo "Note: You'll need to configure your OpenAI API key on first run."

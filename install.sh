@@ -44,10 +44,8 @@ esac
 
 BINNAME="${BINNAME:-expresso}"
 BINDIR="${BINDIR:-/usr/local/bin}"
-RELEASETAG="${RELEASETAG#v}"  # Remove the 'v' prefix from the version
 URL="https://github.com/$REPOOWNER/$REPONAME/releases/download/${RELEASETAG}/Expresso_${RELEASETAG}_${KERNEL}_${MACHINE}.tar.gz"
 
-echo "hello"
 echo "Installing expresso version ${RELEASETAG}..."
 echo "Downloading from $URL"
 echo

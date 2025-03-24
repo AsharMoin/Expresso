@@ -1,7 +1,7 @@
 #!/bin/bash
 
 REPOOWNER="AsharMoin"
-REPONAME="expresso"
+REPONAME="Expresso"
 RELEASETAG=$(curl -s "https://api.github.com/repos/$REPOOWNER/$REPONAME/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
 
 KERNEL=$(uname -s 2>/dev/null || /usr/bin/uname -s)
@@ -44,14 +44,14 @@ esac
 
 BINNAME="${BINNAME:-expresso}"
 BINDIR="${BINDIR:-/usr/local/bin}"
-URL="https://github.com/$REPOOWNER/$REPONAME/releases/download/${RELEASETAG}/expresso_${RELEASETAG}_${KERNEL}_${MACHINE}.tar.gz"
+URL="https://github.com/$REPOOWNER/$REPONAME/releases/download/${RELEASETAG}/Expresso_${RELEASETAG}_${KERNEL}_${MACHINE}.tar.gz"
 
 echo "Installing expresso version ${RELEASETAG}..."
 echo "Downloading from $URL"
 echo
 
-curl --fail --location --progress-bar --output "expresso_${RELEASETAG}_${KERNEL}_${MACHINE}.tar.gz" "$URL"
-tar xzf "expresso_${RELEASETAG}_${KERNEL}_${MACHINE}.tar.gz"
+curl --fail --location --progress-bar --output "Expresso_${RELEASETAG}_${KERNEL}_${MACHINE}.tar.gz" "$URL"
+tar xzf "Expresso_${RELEASETAG}_${KERNEL}_${MACHINE}.tar.gz"
 chmod +x $BINNAME
 sudo mv $BINNAME $BINDIR/$BINNAME
 rm "expresso_${RELEASETAG}_${KERNEL}_${MACHINE}.tar.gz"

@@ -26,3 +26,6 @@ config/config.yaml
 
 # builds folder
 builds
+# Added by goreleaser init:
+dist/
+.goreleaser.yaml

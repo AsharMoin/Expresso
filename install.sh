@@ -1,11 +1,9 @@
 #!/bin/bash
 
-# Repository information
 REPOOWNER="AsharMoin"
 REPONAME="Expresso"
-VERSION="v1.0.0"  # Hardcoded version for first release
+RELEASETAG=$(curl -s "https://api.github.com/repos/$REPOOWNER/$REPONAME/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
 
-# Determine OS type
 KERNEL=$(uname -s 2>/dev/null || /usr/bin/uname -s)
 case ${KERNEL} in
     "Linux"|"linux")
@@ -20,7 +18,6 @@ case ${KERNEL} in
         ;;
 esac
 
-# Determine architecture
 MACHINE=$(uname -m 2>/dev/null || /usr/bin/uname -m)
 case ${MACHINE} in
     arm|armv7*)
@@ -45,37 +42,21 @@ case ${MACHINE} in
         ;;
 esac
 
-# Binary and installation directory settings
-BINNAME="expresso"
+BINNAME="${BINNAME:-Expresso}"
 BINDIR="${BINDIR:-/usr/local/bin}"
-CONFIG_DIR="${HOME}/.config/expresso"
+URL="https://github.com/$REPOOWNER/$REPONAME/releases/download/${RELEASETAG}/expresso_${RELEASETAG}_${KERNEL}_${MACHINE}.tar.gz"
 
-# Download URL for the release - make sure this matches your file naming convention
-URL="https://github.com/$REPOOWNER/$REPONAME/releases/download/${VERSION}/expresso_${VERSION}_${KERNEL}_${MACHINE}.tar.gz"
-
-echo "Installing Expresso version $VERSION..."
+echo "Installing Expresso version ${RELEASETAG}..."
 echo "Downloading from $URL"
 echo
 
-# Download the release archive
-curl -q --fail --location --progress-bar --output "expresso_${KERNEL}_${MACHINE}.tar.gz" "$URL"
-
-# Extract the archive
-tar xzf "expresso_${KERNEL}_${MACHINE}.tar.gz"
-
-# Make binary executable
+curl --fail --location --progress-bar --output "expresso_${RELEASETAG}_${KERNEL}_${MACHINE}.tar.gz" "$URL"
+tar xzf "expresso_${RELEASETAG}_${KERNEL}_${MACHINE}.tar.gz"
 chmod +x $BINNAME
-
-# Create config directory if it doesn't exist
-mkdir -p $CONFIG_DIR
-
-# Install the binary
 sudo mv $BINNAME $BINDIR/$BINNAME
-
-# Clean up
-rm "expresso_${KERNEL}_${MACHINE}.tar.gz"
+rm "expresso_${RELEASETAG}_${KERNEL}_${MACHINE}.tar.gz"
 
 echo
-echo "Installation of Expresso version $VERSION complete!"
-echo "Run 'expresso' to start using it."
+echo "Installation of Expresso version ${RELEASETAG} complete!"
+echo "Run 'Expresso' to start using it."
 echo "Note: You'll need to configure your OpenAI API key on first run."

@@ -30,7 +30,7 @@ func (ui *UI) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case tea.KeyCtrlC.String():
 			ui.state = StateQuitting
-			ui.err = "[Cancelled state correct]"
+			ui.err = "[Cancelled]"
 			return ui, tea.Quit
 		case tea.KeyEnter.String():
 			apiKey := ui.output.GetValue()

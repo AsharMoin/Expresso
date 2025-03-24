@@ -44,17 +44,17 @@ esac
 
 BINNAME="${BINNAME:-Expresso}"
 BINDIR="${BINDIR:-/usr/local/bin}"
-URL="https://github.com/$REPOOWNER/$REPONAME/releases/download/${RELEASETAG}/expresso_${RELEASETAG}_${KERNEL}_${MACHINE}.tar.gz"
+URL="https://github.com/$REPOOWNER/$REPONAME/releases/download/${RELEASETAG}/Expresso_${RELEASETAG}_${KERNEL}_${MACHINE}.tar.gz"
 
 echo "Installing Expresso version ${RELEASETAG}..."
 echo "Downloading from $URL"
 echo
 
-curl --fail --location --progress-bar --output "expresso_${RELEASETAG}_${KERNEL}_${MACHINE}.tar.gz" "$URL"
-tar xzf "expresso_${RELEASETAG}_${KERNEL}_${MACHINE}.tar.gz"
+curl --fail --location --progress-bar --output "Expresso_${RELEASETAG}_${KERNEL}_${MACHINE}.tar.gz" "$URL"
+tar xzf "Expresso_${RELEASETAG}_${KERNEL}_${MACHINE}.tar.gz"
 chmod +x $BINNAME
 sudo mv $BINNAME $BINDIR/$BINNAME
-rm "expresso_${RELEASETAG}_${KERNEL}_${MACHINE}.tar.gz"
+rm "Expresso_${RELEASETAG}_${KERNEL}_${MACHINE}.tar.gz"
 
 echo
 echo "Installation of Expresso version ${RELEASETAG} complete!"

@@ -30,7 +30,7 @@ func (ui *UI) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case tea.KeyCtrlC.String():
 			ui.state = StateQuitting
-			ui.err = "[Cancelled]"
+			ui.err = "[Configuration cancelled]"
 			return ui, tea.Quit
 		case tea.KeyEnter.String():
 			apiKey := ui.output.GetValue()
@@ -42,10 +42,14 @@ func (ui *UI) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			return ui, func() tea.Msg {
 				if err := ui.config.UpdateConfig(apiKey); err != nil {
 					ui.state = StateQuitting
-					ui.err = "[Your key failed to be added]"
+					ui.err = fmt.Sprintf("[Failed to save API key: %s]", err.Error())
+					return Exiting{
+						success: "",
+						output:  "",
+					}
 				}
 				return Exiting{
-					success: "[Your key was successfully added!]",
+					success: "[Your API key was successfully added!]",
 					output:  "",
 				}
 			}

@@ -15,10 +15,10 @@ func (ui *UI) Init() tea.Cmd {
 	// Load configuration
 	config, err := config.InitConfig()
 	ui.config = config
-	if err != nil {
-		return tea.Sequence(
-			ui.startConfigure(),
-		)
+
+	if err != nil || config.GetKey() == "" {
+		// if there's no key, start the configuration process
+		return ui.startConfigure()
 	}
 
 	return ui.start(config)
@@ -42,6 +42,8 @@ func (ui *UI) View() string {
 		return fmt.Sprintf("%s\n%s", ui.output.GetStdout(), ui.output.View())
 	case StateLoading:
 		return fmt.Sprintf("\n%s%s", ui.spinner.View(), message)
+	case StateFailed:
+		return ui.output.GetStdout() + "\n" + errorStyle.Render("Failed to generate command") + "\n\n\n"
 	}
 
 	return ""

@@ -137,7 +137,6 @@ func (ui *UI) executeCommand() (tea.Model, tea.Cmd) {
 }
 
 // Helper functions
-
 // createShellCommand creates a proper exec.Cmd based on shell type
 func createShellCommand(shell, commandStr string) *exec.Cmd {
 	if shell == "cmd" {

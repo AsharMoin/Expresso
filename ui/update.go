@@ -71,6 +71,7 @@ func (ui *UI) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			ui.err = "[Cancelled]"
 			return ui, tea.Quit
 		case "y":
+			ui.state = StateExecuting
 			return ui.executeCommand()
 		default:
 			return ui, nil
@@ -116,33 +117,44 @@ func (ui *UI) handleDefaultMsg(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (ui *UI) executeCommand() (tea.Model, tea.Cmd) {
 	commandToExecute := ui.expresso.GetCommand()
 
-	ui.state = StateExecuting
-
-	shell := ui.config.GetUser().GetUserShell()
-	cmd := createShellCommand(shell, commandToExecute)
-
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Stdin = os.Stdin
-
 	return ui, tea.Sequence(
+		// Print the command info to standard terminal before executing
 		func() tea.Msg {
-			cmd.Run()
-			return Exiting{
-				success: "[Success]",
-				output:  commandToExecute,
-			}
+			fmt.Println(ui.output.GetStdout())
+			return nil
 		},
+		tea.ExecProcess(
+			createExecCommand(ui.config.GetUser().GetUserShell(), commandToExecute),
+			func(err error) tea.Msg {
+				if err != nil {
+					return Exiting{
+						success: "",
+						output:  err.Error(),
+					}
+				}
+				return Exiting{
+					success: "[Success]",
+					output:  "",
+				}
+			},
+		),
 	)
 }
 
-// Helper functions
-// createShellCommand creates a proper exec.Cmd based on shell type
-func createShellCommand(shell, commandStr string) *exec.Cmd {
+// Helper function to create a properly formatted exec.Cmd
+func createExecCommand(shell, commandStr string) *exec.Cmd {
+	var cmd *exec.Cmd
 	if shell == "cmd" {
-		return exec.Command(shell, "/C", commandStr)
+		cmd = exec.Command(shell, "/C", commandStr)
+	} else {
+		cmd = exec.Command(shell, "-c", commandStr)
 	}
-	return exec.Command(shell, "-c", commandStr)
+
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	return cmd
 }
 
 // formatCommandOutput creates a formatted string for command display

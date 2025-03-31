@@ -30,14 +30,14 @@ var message = loadingMessages[rand.Intn(len(loadingMessages))]
 func (ui *UI) View() string {
 	switch ui.state {
 	case StateExecuting:
-		return ui.output.GetStdout() + "Executing command...\n"
+		return "" // Minimal output during execution
 	case StateConfirming:
 		return ui.output.GetStdout() + "Execute this command? (y/N) "
 	case StateQuitting:
 		if ui.err != "" {
 			return ui.output.GetStdout() + "\n" + errorStyle.Render(ui.err) + "\n\n\n"
 		}
-		return ui.output.GetStdout() + "\n" + successStyle.Render(ui.success) + "\n\n\n"
+		return "\n" + successStyle.Render(ui.success) + "\n\n\n"
 	case StateConfiguring:
 		return fmt.Sprintf("%s\n%s", ui.output.GetStdout(), ui.output.View())
 	case StateLoading:

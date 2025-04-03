@@ -1,9 +1,17 @@
 # 🚀 Expresso
 
-Express-o your commands effortlessly - a natural language to shell command converter powered by AI.
+<p align="center">
+  <span style="font-size: 1.5em; font-weight: bold; color: #0066cc;">Express-o your commands effortlessly</span>
+</p>
+<p align="center">
+  <em>Transform natural language into powerful shell commands with AI</em>
+</p>
+<p align="center">
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/AsharMoin/Expresso/main/assets/logo.png" alt="Expresso Logo" width="200" />
+  <a href="https://raw.githubusercontent.com/AsharMoin/Expresso/main/assets/demo.gif">
+    <img src="https://raw.githubusercontent.com/AsharMoin/Expresso/main/assets/demo.gif" alt="Expresso Demo" width="600" />
+  </a>
 </p>
 
 ## 🌟 Overview

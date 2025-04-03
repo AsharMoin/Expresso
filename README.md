@@ -10,7 +10,7 @@
 
 <p align="center">
   <a href="https://raw.githubusercontent.com/AsharMoin/Expresso/main/assets/demo.gif">
-    <img src="https://raw.githubusercontent.com/AsharMoin/Expresso/main/assets/demo.gif" alt="Expresso Demo" width="600" />
+    <img src="https://raw.githubusercontent.com/AsharMoin/Expresso/main/assets/demo.gif" alt="Expresso Demo" width="800" />
   </a>
 </p>
 

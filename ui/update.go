@@ -118,11 +118,7 @@ func (ui *UI) executeCommand() (tea.Model, tea.Cmd) {
 	commandToExecute := ui.expresso.GetCommand()
 
 	return ui, tea.Sequence(
-		// Print the command info to standard terminal before executing
-		func() tea.Msg {
-			fmt.Println(ui.output.GetStdout())
-			return nil
-		},
+		tea.Println(ui.output.GetStdout()),
 		tea.ExecProcess(
 			createExecCommand(ui.config.GetUser().GetUserShell(), commandToExecute),
 			func(err error) tea.Msg {

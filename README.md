@@ -20,12 +20,12 @@ Expresso is a command-line utility that transforms your natural language request
 
 ## ✨ Features
 
-- 🔄 Convert natural language to shell commands
-- 🖥️ Works across multiple shells (Bash, Zsh, PowerShell, cmd)
-- 🧠 Powered by OpenAI's GPT models
-- 📋 Provides command descriptions
-- ✅ Command confirmation before execution
-- 🔒 Secure API key management
+- Convert natural language to shell commands
+- Works across multiple shells (Bash, Zsh, PowerShell, cmd)
+- Powered by OpenAI's GPT models
+- Provides command descriptions
+- Command confirmation before execution
+- Secure API key management
 
 ## 📋 Requirements
 
@@ -43,21 +43,6 @@ curl -fsSL https://raw.githubusercontent.com/AsharMoin/Expresso/main/install.sh 
 ### Option 2: Download Binary
 
 Visit the [releases page](https://github.com/AsharMoin/Expresso/releases) to download the latest binary for your platform.
-
-### Option 3: Build from Source
-
-```bash
-# Clone the repository
-git clone https://github.com/AsharMoin/Expresso/
-cd Expresso
-
-# Build the binary
-go build -o expresso
-
-# Make it executable and move to your PATH (Linux/macOS)
-chmod +x expresso
-sudo mv expresso /usr/local/bin/
-```
 
 ## 🚀 Getting Started
 

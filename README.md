@@ -53,15 +53,6 @@ Visit the [releases page](https://github.com/AsharMoin/Expresso/releases) to dow
 
 2. When prompted, enter your OpenAI API key (required only on first run)
 
-3. Start using Expresso with natural language requests:
-   ```bash
-   expresso find all pdf files in my Documents folder
-   expresso compress all jpg files in current directory
-   expresso show me system information
-   ```
-
-4. Review the proposed command and description, then confirm execution by pressing `y`
-
 ## 💡 Usage Examples
 
 | Natural Language Request | Generated Command |
